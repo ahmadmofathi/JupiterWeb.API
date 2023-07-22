@@ -3,6 +3,10 @@ using JupiterWeb.API.Data.Models;
 using JupiterWeb.BL;
 using JupiterWeb.DAL;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
+
 
 
 var builder = WebApplication.CreateBuilder(args);
@@ -24,8 +28,24 @@ builder.Services.AddScoped<IUserManager, UserManager>();
 builder.Services.AddDbContext<UsersContext>(options => options.UseSqlServer(
     builder.Configuration.GetConnectionString("ConnectionString")));
 
-var app = builder.Build();
+// Authenticaction
+var secretKey = builder.Configuration.GetValue<string>("SecretKey");
+var secretKeyBytes = string.IsNullOrEmpty(secretKey) ? null : Encoding.ASCII.GetBytes(secretKey);
+var Key = new SymmetricSecurityKey(secretKeyBytes);
 
+builder.Services.AddAuthentication("default").AddJwtBearer("default", 
+    options =>
+    {
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = false,
+            IssuerSigningKey = Key
+        };
+    }
+    );
+var app = builder.Build();
+app.UseAuthentication();
+app.UseAuthorization();
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
