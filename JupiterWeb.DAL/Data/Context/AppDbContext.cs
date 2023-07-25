@@ -1,9 +1,10 @@
-﻿using Microsoft.EntityFrameworkCore;
-using JupiterWeb.API.Data.Models;
+﻿using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 
 namespace JupiterWeb.API.Data
 {
-    public class AppDbContext : DbContext
+    public class AppDbContext :IdentityDbContext<User, IdentityRole<string>, string>
     {
         public AppDbContext()
         {
@@ -13,14 +14,59 @@ namespace JupiterWeb.API.Data
             : base(options)
         {
         }
-        protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+
+        protected override void OnModelCreating(ModelBuilder builder)
         {
-            if (!optionsBuilder.IsConfigured)
+            base.OnModelCreating(builder);
+
+            builder.Entity<User>(entity =>
             {
-                optionsBuilder.UseSqlServer(@"Server=(localdb)\mssqllocaldb;Database=JupiterDB;Trusted_Connection=True;");
-            }
+                entity.ToTable("User");
+
+                entity.Property(e => e.Name)
+                    .HasMaxLength(256)
+                    .IsUnicode(false);
+
+                entity.Property(e => e.Role)
+                    .HasMaxLength(256)
+                    .IsUnicode(false);
+
+                entity.Property(e => e.Address)
+                    .HasMaxLength(256)
+                    .IsUnicode(false);
+
+                entity.Property(e => e.Email)
+                    .HasMaxLength(256)
+                    .IsUnicode(false);
+
+                entity.Property(e => e.PasswordHash)
+                    .HasMaxLength(256)
+                    .IsUnicode(false);
+
+                entity.Property(e => e.WhatsApp)
+                    .HasMaxLength(256)
+                    .IsUnicode(false);
+
+                entity.Property(e => e.PhoneNumber)
+                    .HasMaxLength(256)
+                    .IsUnicode(false);
+
+                entity.Property(e => e.Branch)
+                    .HasMaxLength(256)
+                    .IsUnicode(false);
+
+                entity.HasIndex(e => e.Email)
+                    .IsUnique();
+
+                entity.HasIndex(e => e.UserName)
+                    .IsUnique();
+
+                entity.HasIndex(e => e.PhoneNumber)
+                    .IsUnique();
+
+            });
         }
-        public DbSet<User> Users { get; set; }
+        public DbSet<User> User => Set<User>();
         
     }
 }

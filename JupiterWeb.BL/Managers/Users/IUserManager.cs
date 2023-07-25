@@ -10,7 +10,7 @@ namespace JupiterWeb.BL
     {
         IEnumerable<UserReadDTO> GetUsers();
         UserReadDTO GetUser(int id);
-        int Add(UserAddDTO user);
+        string Add(UserAddDTO user);
         bool Update(UserUpdateDTO user);
         bool Delete(int id);
     }

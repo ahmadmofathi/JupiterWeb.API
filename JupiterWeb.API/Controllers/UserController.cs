@@ -1,5 +1,5 @@
 ﻿using JupiterWeb.API.Data;
-using JupiterWeb.API.Data.Models;
+using Microsoft.AspNetCore.Identity;
 using JupiterWeb.BL;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -7,6 +7,10 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using System.Security.Claims;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
+using System.IdentityModel.Tokens.Jwt;
 
 namespace JupiterWeb.API.Controllers
 {
@@ -15,24 +19,128 @@ namespace JupiterWeb.API.Controllers
     public class UserController : ControllerBase
     {
         private readonly AppDbContext _context;
-        private readonly Task _userManager;
+        private readonly UserManager<User> _userManager;
+        private readonly IConfiguration _configuration;
 
-        public UserController(AppDbContext context)
+        public UserController(AppDbContext context,UserManager<User> userManager,IConfiguration config)
         {
             _context = context;
+            _userManager = userManager;
+            _configuration= config;
         }
+        [HttpPost]
+        [Route("register")]
+        public async Task<ActionResult<string>> Register(RegisterDTO registerDTO)
+        {
+            try { 
+            var newUser = new User
+            {
+                Id = Guid.NewGuid().ToString(),
+                Email = registerDTO.Email,
+                UserName = registerDTO.UserName,
+                GetEmployedAt = registerDTO.GetEmployedAt,
+                Role = registerDTO.Role,
+                Address = registerDTO.Address,
+                Branch = registerDTO.Branch,
+                WhatsApp = registerDTO.WhatsApp,
+                PhoneNumber = registerDTO.PhoneNumber,
+                Name = registerDTO.Name,
+            };
 
-        /* [HttpPost]
+            var CreationResult = await _userManager.CreateAsync(newUser, registerDTO.Password);
+            if (!CreationResult.Succeeded)
+            {
+                return BadRequest(CreationResult.Errors);
+            }
+                // Fetch the user from the database
+                var createdUser = await _userManager.FindByEmailAsync(newUser.Email);
+                if (createdUser == null)
+                {
+                    return BadRequest("User was not found after creation");
+                }
+
+                var userClaims = new List<Claim>
+                        {
+                            new Claim(ClaimTypes.NameIdentifier, newUser.UserName),
+                            new Claim(ClaimTypes.Email, newUser.Email),
+                            new Claim(ClaimTypes.Role, newUser.Role),
+                            new Claim(ClaimTypes.Country, "EGY"),
+                            new Claim(ClaimTypes.DateOfBirth, newUser.GetEmployedAt.ToString("yyyy-MM-dd")),
+                            new Claim(ClaimTypes.StreetAddress, newUser.Address),
+                            new Claim(ClaimTypes.StateOrProvince, newUser.Branch),
+                            new Claim(ClaimTypes.MobilePhone, newUser.PhoneNumber),
+                        };
+
+
+            // Save the user to the database
+            // await _context.SaveChangesAsync();
+            // Now add the claims
+            var claimsResult = await _userManager.AddClaimsAsync(newUser, userClaims);
+            if (!claimsResult.Succeeded)
+            {
+                // If adding the claims fails, delete the user to avoid orphaned users
+                await _userManager.DeleteAsync(newUser);
+                return BadRequest(claimsResult.Errors);
+            }
+            /* var CreationResult = await _userManager.CreateAsync(newUser, registerDTO.Password);
+             if(!CreationResult.Succeeded)
+             {
+                 return BadRequest(CreationResult.Errors);
+             }
+             await _userManager.AddClaimsAsync(newUser, userClaims);
+              */
+            return Ok("Done");
+        }
+            catch (DbUpdateException ex)
+            {
+                var exceptionDetails = ex.InnerException?.Message;
+                Console.WriteLine($"DbUpdateException: {exceptionDetails}");
+
+                return BadRequest(exceptionDetails);
+            }
+            catch (Exception ex){
+                // Log the exception or return it
+                return BadRequest(ex.Message);
+            }
+        }
+        [HttpPost]
         [Route("login")]
         public async Task<ActionResult<TokenDTO>> Login(LoginDTO credintials)
         {
-            var emp = await _userManager.FindByNameAsync(credintials.Email);
-            if (emp == null)
+            var user = await _userManager.FindByNameAsync(credintials.UserName);
+            if (user == null)
             {
                 return BadRequest("User Not Found");
             }
-            if(await _userManager.IsLo)
-        } */
+            if(await _userManager.IsLockedOutAsync(user))
+            {
+                return BadRequest("Try Again");
+            }
+            var userClaims= await _userManager.GetClaimsAsync(user);
+            bool isAuthenticated = await _userManager.CheckPasswordAsync(user,credintials.Password);
+            if(!isAuthenticated)
+            {
+                await _userManager.AccessFailedAsync(user);
+                return Unauthorized("Wrong Credentials");
+            }
+            var exp = DateTime.Now.AddMinutes(30);
+            var secretKey = _configuration.GetValue<string>("SecretKey");
+            var secretKeyBytes = Encoding.ASCII.GetBytes(secretKey);
+            var Key = new SymmetricSecurityKey(secretKeyBytes);
+            var methodGeneratingToken = new SigningCredentials(Key, SecurityAlgorithms.HmacSha256Signature);
+            var jwt = new JwtSecurityToken(
+                claims: userClaims,
+                notBefore: DateTime.Now,
+                expires: DateTime.Now.AddMinutes(30)
+            );
+            var tokenHandler = new JwtSecurityTokenHandler();
+            string tokenString = tokenHandler.WriteToken(jwt);
+            return new TokenDTO
+            {
+                Token = tokenString,
+                ExpiryDate = exp,
+            };
+        }
 
         [HttpGet]
         public async Task<IActionResult> GetUsers()
@@ -57,36 +165,45 @@ namespace JupiterWeb.API.Controllers
         [HttpPost]
         public async Task<IActionResult> CreateUser(User user)
         {
-            _context.Users.Add(user);
-            await _context.SaveChangesAsync();
+            var result = await _userManager.CreateAsync(user, user.PasswordHash);
+            if (!result.Succeeded)
+            {
+                return BadRequest(result.Errors);
+            }
 
             return CreatedAtAction(nameof(GetUser), new { id = user.Id }, user);
         }
 
         [HttpPut("{id}")]
-        public async Task<IActionResult> UpdateUser(int id, User user)
+        public async Task<IActionResult> UpdateUser(string id, User user)
         {
             if (id != user.Id)
             {
                 return BadRequest();
             }
 
-            _context.Entry(user).State = EntityState.Modified;
+            var existingUser = await _userManager.FindByIdAsync(id.ToString());
 
-            try
+            if (existingUser == null)
             {
-                await _context.SaveChangesAsync();
+                return NotFound();
             }
-            catch (DbUpdateConcurrencyException)
+
+            // Update properties
+            existingUser.Email = user.Email;
+            existingUser.Name = user.Name;
+            existingUser.Role = user.Role;
+            existingUser.Branch = user.Branch;
+            existingUser.BasicSalary = user.BasicSalary;
+            existingUser.WhatsApp = user.WhatsApp;
+            existingUser.PhoneNumber = user.PhoneNumber;
+            existingUser.UserName = user.UserName;
+
+            var result = await _userManager.UpdateAsync(existingUser);
+
+            if (!result.Succeeded)
             {
-                if (!UserExists(id))
-                {
-                    return NotFound();
-                }
-                else
-                {
-                    throw;
-                }
+                return BadRequest(result.Errors);
             }
 
             return NoContent();
@@ -95,20 +212,24 @@ namespace JupiterWeb.API.Controllers
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteUser(int id)
         {
-            var user = await _context.Users.FindAsync(id);
+            var user = await _userManager.FindByIdAsync(id.ToString());
 
             if (user == null)
             {
                 return NotFound();
             }
 
-            _context.Users.Remove(user);
-            await _context.SaveChangesAsync();
+            var result = await _userManager.DeleteAsync(user);
+
+            if (!result.Succeeded)
+            {
+                return BadRequest(result.Errors);
+            }
 
             return NoContent();
         }
 
-        private bool UserExists(int id)
+        private bool UserExists(string id)
         {
             return _context.Users.Any(e => e.Id == id);
         }
