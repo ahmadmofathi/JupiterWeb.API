@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace JupiterWeb.DAL
+namespace JupiterWeb.DAL.Repos.Users
 {
     public interface IUserRepo
     {

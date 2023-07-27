@@ -1,6 +1,8 @@
-﻿using Microsoft.AspNetCore.Identity;
+﻿using JupiterWeb.DAL;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
+using System.Reflection.Emit;
 
 namespace JupiterWeb.API.Data
 {
@@ -65,8 +67,42 @@ namespace JupiterWeb.API.Data
                     .IsUnique();
 
             });
+            builder.Entity<JupiterTask>(entity =>
+            {
+                entity.ToTable("JupiterTask");
+
+                entity.Property(e => e.Name)
+                                    .HasMaxLength(100)
+                                    .IsRequired();
+
+                entity.Property(e => e.IsDone);
+
+                entity.Property(e => e.TaskPoints)
+                    .IsRequired();
+
+                entity.Property(e => e.Description)
+                    .HasMaxLength(500);
+
+                entity.Property(e => e.Link)
+                    .HasMaxLength(500);
+
+                entity.Property(e => e.Deadline)
+                    .HasColumnType("datetime2");
+
+                entity.HasOne(e => e.UserAssignedBy)
+                    .WithMany(e => e.AssignedByTasks)
+                    .HasForeignKey(e => e.AssignedById)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasOne(e => e.UserAssignedTo)
+                    .WithMany(e => e.AssignedToTasks)
+                    .HasForeignKey(e => e.AssignedToId)
+                    .OnDelete(DeleteBehavior.Restrict);
+            
+            });
         }
         public DbSet<User> User => Set<User>();
+        public DbSet<JupiterTask> Task => Set<JupiterTask>();
         
     }
 }

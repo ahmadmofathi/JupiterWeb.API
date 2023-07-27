@@ -125,6 +125,10 @@ namespace JupiterWeb.API.Controllers
             }
             var exp = DateTime.Now.AddMinutes(30);
             var secretKey = _configuration.GetValue<string>("SecretKey");
+            if (string.IsNullOrEmpty(secretKey))
+            {
+                throw new ArgumentNullException("The secret key cannot be null or empty.");
+            }
             var secretKeyBytes = Encoding.ASCII.GetBytes(secretKey);
             var Key = new SymmetricSecurityKey(secretKeyBytes);
             var methodGeneratingToken = new SigningCredentials(Key, SecurityAlgorithms.HmacSha256Signature);
@@ -165,6 +169,11 @@ namespace JupiterWeb.API.Controllers
         [HttpPost]
         public async Task<IActionResult> CreateUser(User user)
         {
+            if (string.IsNullOrEmpty(user.PasswordHash))
+            {
+                // Handle the case where password is null or empty, perhaps by returning an error.
+                return BadRequest("The password cannot be null or empty.");
+            }
             var result = await _userManager.CreateAsync(user, user.PasswordHash);
             if (!result.Succeeded)
             {

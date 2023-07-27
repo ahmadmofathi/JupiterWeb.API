@@ -1,5 +1,5 @@
 ﻿using JupiterWeb.API.Data;
-using JupiterWeb.DAL;
+using JupiterWeb.DAL.Repos.Users;
 using System;
 using System.Collections.Generic;
 using System.Linq;

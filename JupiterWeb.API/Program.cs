@@ -1,6 +1,5 @@
 using JupiterWeb.API.Data;
 using JupiterWeb.BL;
-using JupiterWeb.DAL;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
@@ -11,7 +10,8 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.AspNetCore.Identity;
-
+using JupiterWeb.DAL.Repos.Users;
+using JupiterWeb.DAL;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -29,7 +29,8 @@ var connectionString = builder.Configuration.GetConnectionString("DefaultConnect
 builder.Services.AddDbContext<AppDbContext>(options => options.UseSqlServer(connectionString));
 // Register our Repo
 builder.Services.AddScoped<IUserRepo, UserRepo>();
-builder.Services.AddAuthentication();
+builder.Services.AddScoped<ITaskRepo, TasksRepo>();
+builder.Services.AddScoped<ITaskManager, TasksManager>();
 builder.Services.AddAuthorization();
 // Injection of UserManager 
 
@@ -51,7 +52,6 @@ builder.Services.AddAuthentication("default").AddJwtBearer("default",
     );
 var app = builder.Build();
 app.UseAuthentication();
-app.UseAuthorization();
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
