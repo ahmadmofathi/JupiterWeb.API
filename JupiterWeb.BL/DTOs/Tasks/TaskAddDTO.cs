@@ -25,10 +25,9 @@ namespace JupiterWeb.BL
 
         [ForeignKey("UserAssignedBy")]
         public string? AssignedById { get; set; }
-        public User? UserAssignedBy { get; set; }
 
         [ForeignKey("UserAssignedTo")]
         public string? AssignedToId { get; set; }
-        public User? UserAssignedTo { get; set; }
+
     }
 }
