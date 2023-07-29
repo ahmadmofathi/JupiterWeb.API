@@ -1,5 +1,5 @@
-﻿using JupiterWeb.API.Data.Models;
-using JupiterWeb.DAL;
+﻿using JupiterWeb.API.Data;
+using JupiterWeb.DAL.Repos.Users;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -23,6 +23,7 @@ namespace JupiterWeb.BL
                 Name = u.Name,
                 Address = u.Address,
                 WhatsApp = u.WhatsApp,
+                UserName = u.UserName,
                 PhoneNumber = u.PhoneNumber,
                 Email = u.Email,
                 Branch = u.Branch,
@@ -30,16 +31,17 @@ namespace JupiterWeb.BL
                 Role = u.Role,
             });
         }
-        public int Add(UserAddDTO userRequest)
+        public string Add(UserAddDTO userRequest)
         {
             User user = new User
             {
                 Name= userRequest.Name,
+                UserName= userRequest.UserName,
                 Address = userRequest.Address,
                 WhatsApp= userRequest.WhatsApp,
                 PhoneNumber = userRequest.PhoneNumber,
                 BasicSalary = userRequest.BasicSalary,
-                Password = userRequest.Password,
+                PasswordHash = userRequest.Password,
                 Email = userRequest.Email,
                 Branch = userRequest.Branch,
                 Role = userRequest.Role,
@@ -73,13 +75,14 @@ namespace JupiterWeb.BL
                 return false;
             }
             user.Name = userRequest.Name;
+            user.UserName = userRequest.UserName;
             user.Address = userRequest.Address;
             user.WhatsApp = userRequest.WhatsApp;
             user.PhoneNumber = userRequest.PhoneNumber;
             user.Branch = userRequest.Branch;
             user.Role = userRequest.Role;
             user.Email = userRequest.Email;
-            user.Password = userRequest.Password;
+            user.PasswordHash = userRequest.Password;
             user.BasicSalary = userRequest.BasicSalary;
 
             _userRepo.Update(user);

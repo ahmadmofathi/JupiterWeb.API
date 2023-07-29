@@ -1,18 +1,18 @@
 ﻿using JupiterWeb.API.Data;
-using JupiterWeb.API.Data.Models;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace JupiterWeb.DAL
+namespace JupiterWeb.DAL.Repos.Users
 {
     public class UserRepo : IUserRepo
     {
         private readonly AppDbContext _context;
 
-        public UserRepo(AppDbContext context) { 
+        public UserRepo(AppDbContext context)
+        {
             _context = context;
         }
         public List<User> GetUsers()

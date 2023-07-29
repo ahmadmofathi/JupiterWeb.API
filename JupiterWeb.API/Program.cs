@@ -1,32 +1,39 @@
 using JupiterWeb.API.Data;
-using JupiterWeb.API.Data.Models;
 using JupiterWeb.BL;
-using JupiterWeb.DAL;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
-
-
+using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
+using Microsoft.AspNetCore.Identity;
+using JupiterWeb.DAL.Repos.Users;
+using JupiterWeb.DAL;
 
 var builder = WebApplication.CreateBuilder(args);
 
 //context registration 
-var connectionString = builder.Configuration.GetConnectionString("ConnectionString");
-builder.Services.AddDbContext<AppDbContext>(options => options.UseSqlServer(connectionString));
-
+builder.Services.AddIdentity<User, IdentityRole<string>>()
+    .AddEntityFrameworkStores<AppDbContext>()
+    .AddDefaultTokenProviders();
 // Add services to the container.
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
+//connection String
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection"); 
+builder.Services.AddDbContext<AppDbContext>(options => options.UseSqlServer(connectionString));
 // Register our Repo
 builder.Services.AddScoped<IUserRepo, UserRepo>();
-builder.Services.AddScoped<IUserManager, UserManager>();
+builder.Services.AddScoped<ITaskRepo, TasksRepo>();
+builder.Services.AddScoped<ITaskManager, TasksManager>();
+builder.Services.AddAuthorization();
+// Injection of UserManager 
 
-// Register of UsersContext
-builder.Services.AddDbContext<UsersContext>(options => options.UseSqlServer(
-    builder.Configuration.GetConnectionString("ConnectionString")));
 
 // Authenticaction
 var secretKey = builder.Configuration.GetValue<string>("SecretKey");
@@ -45,13 +52,13 @@ builder.Services.AddAuthentication("default").AddJwtBearer("default",
     );
 var app = builder.Build();
 app.UseAuthentication();
-app.UseAuthorization();
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
 }
+
 
 app.UseHttpsRedirection();
 
