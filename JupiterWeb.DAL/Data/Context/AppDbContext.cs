@@ -102,7 +102,7 @@ namespace JupiterWeb.API.Data
             });
         }
         public DbSet<User> User => Set<User>();
-        public DbSet<JupiterTask> Task => Set<JupiterTask>();
+        public DbSet<JupiterTask> Tasks => Set<JupiterTask>();
         
     }
 }

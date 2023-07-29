@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using JupiterWeb.DAL;
 using JupiterWeb.BL;
+using Microsoft.EntityFrameworkCore;
 
 namespace JupiterWeb.API
 {
@@ -11,44 +12,7 @@ namespace JupiterWeb.API
     [ApiController]
     public class TaskController : ControllerBase
     {
-        private List<JupiterTask> _tasks = new List<JupiterTask> {
-                new JupiterTask
-                {
-                    Id = "1",
-                    Name = "Task 1",
-                    IsDone = false,
-                    TaskPoints = 10,
-                    Description = "Description of Task 1",
-                    Link = "https://example.com/task1",
-                    Deadline = DateTime.Now.AddDays(7),
-                    AssignedById = "1",
-                    AssignedToId = "2"
-                },
-                new JupiterTask
-                {
-                    Id="2",
-                    Name = "Task 2",
-                    IsDone = true,
-                    TaskPoints = 20,
-                    Description = "Description of Task 2",
-                    Link = "https://example.com/task2",
-                    Deadline = DateTime.Now.AddDays(14),
-                    AssignedById = "2",
-                    AssignedToId = "1"
-                },
-                new JupiterTask
-                {
-                    Id="3",
-                    Name = "Task 3",
-                    IsDone = false,
-                    TaskPoints = 30,
-                    Description = "Description of Task 3",
-                    Link = "https://example.com/task3",
-                    Deadline = DateTime.Now.AddDays(21),
-                    AssignedById = "3",
-                    AssignedToId = "1"
-                }
-            };
+        
         private readonly AppDbContext _context;
         private readonly IConfiguration _configuration;
         private readonly ITaskManager _taskManager;
@@ -61,8 +25,10 @@ namespace JupiterWeb.API
         
         }
         [HttpGet]
-        public ActionResult<List<JupiterTask>> GetTasks()
+        public async Task<ActionResult<List<JupiterTask>>> GetTasksAsync()
         {
+            var _tasks = await _context.Tasks.ToListAsync();
+
             if (!_tasks.Any())
             {
                 return NotFound();
@@ -71,8 +37,10 @@ namespace JupiterWeb.API
         }
         [HttpGet]
         [Route("{id}")]
-        public ActionResult<JupiterTask> GetTaskById(string id) { 
-            JupiterTask? task = _tasks.FirstOrDefault(t => t.Id == id);
+        public async Task<ActionResult<JupiterTask>> GetTaskByIdAsync(string id) {
+            var task = await _context.Tasks.FindAsync(id);
+
+            
             if(task == null)
             {
                 return NotFound();
@@ -80,47 +48,60 @@ namespace JupiterWeb.API
             return Ok(task);
         }
         [HttpPost]
-        public ActionResult AddTask(JupiterTask task)
+        public async Task<ActionResult> AddTaskAsync(JupiterTask task)
         {
-            _tasks.Add(task);
+            _context.Tasks.Add(task);
+            await _context.SaveChangesAsync();
+
             return Ok();
         }
 
         [HttpPut]
         [Route("{id}")]
-        public ActionResult Update(JupiterTask task,string id)
+        public async Task<ActionResult> UpdateAsync(JupiterTask task,string id)
         {
-            if(id != task.Id)
+            if (id != task.Id)
             {
                 return BadRequest();
             }
-            JupiterTask? TaskToUpdate = _tasks.FirstOrDefault(x=>x.Id == id);
-            if (TaskToUpdate == null)
+
+            var taskToUpdate = await _context.Tasks.FindAsync(id);
+
+            if (taskToUpdate == null)
             {
                 return NotFound();
             }
-            TaskToUpdate.Name = task.Name;
-            TaskToUpdate.Description = task.Description;
-            TaskToUpdate.IsDone = task.IsDone;
-            TaskToUpdate.Deadline = task.Deadline;
-            TaskToUpdate.Link = task.Link;
-            TaskToUpdate.TaskPoints = task.TaskPoints;
-            TaskToUpdate.AssignedToId = task.AssignedToId;
-            TaskToUpdate.AssignedById = task.AssignedById;
-            TaskToUpdate.UserAssignedBy = task.UserAssignedBy;
-            TaskToUpdate.UserAssignedTo = task.UserAssignedTo;
+
+            // update properties
+            taskToUpdate.Name = task.Name;
+            taskToUpdate.Description = task.Description;
+            taskToUpdate.IsDone = task.IsDone;
+            taskToUpdate.Deadline = task.Deadline;
+            taskToUpdate.Link = task.Link;
+            taskToUpdate.TaskPoints = task.TaskPoints;
+            taskToUpdate.AssignedToId = task.AssignedToId;
+            taskToUpdate.AssignedById = task.AssignedById;
+            taskToUpdate.UserAssignedBy = task.UserAssignedBy;
+            taskToUpdate.UserAssignedTo = task.UserAssignedTo;
+
+            await _context.SaveChangesAsync();
+
             return Ok();
         }
 
         [HttpDelete]
         [Route("{id}")]
-        public ActionResult Delete(string id) { 
-            JupiterTask? taskDelete = _tasks.FirstOrDefault(x => x.Id == id);
-            if (taskDelete == null)
+        public async Task<ActionResult> DeleteAsync(string id) {
+            var taskToDelete = await _context.Tasks.FindAsync(id);
+
+            if (taskToDelete == null)
             {
                 return NotFound();
             }
-            _tasks.Remove(taskDelete);
+
+            _context.Tasks.Remove(taskToDelete);
+            await _context.SaveChangesAsync();
+
             return Ok();
         }
     }
