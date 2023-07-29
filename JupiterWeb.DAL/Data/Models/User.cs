@@ -1,4 +1,4 @@
-﻿using JupiterWeb.DAL;
+using JupiterWeb.DAL;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;

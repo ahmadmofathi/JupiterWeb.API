@@ -1,4 +1,4 @@
-﻿using JupiterWeb.API.Data;
+using JupiterWeb.API.Data;
 using Microsoft.AspNetCore.Identity;
 using JupiterWeb.BL;
 using Microsoft.AspNetCore.Mvc;
