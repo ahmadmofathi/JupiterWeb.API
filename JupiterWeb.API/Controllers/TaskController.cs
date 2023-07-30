@@ -12,41 +12,45 @@ namespace JupiterWeb.API
     [ApiController]
     public class TaskController : ControllerBase
     {
-        
         private readonly AppDbContext _context;
         private readonly IConfiguration _configuration;
         private readonly ITaskManager _taskManager;
+        private readonly UserManager<User> _userManager;
 
-        public TaskController(AppDbContext context, IConfiguration config, ITaskManager taskManager)
+        public TaskController(AppDbContext context, IConfiguration configuration, ITaskManager taskManager, UserManager<User> userManager)
         {
             _context = context;
-            _configuration = config;
+            _configuration = configuration;
             _taskManager = taskManager;
-        
+            _userManager = userManager;
         }
+
         [HttpGet]
         public async Task<ActionResult<List<JupiterTask>>> GetTasksAsync()
         {
-            var _tasks = await _context.Tasks.ToListAsync();
+            var tasks = await _context.Tasks.ToListAsync();
 
-            if (!_tasks.Any())
+            if (!tasks.Any())
             {
                 return NotFound();
             }
-            return Ok(_tasks);
+
+            return Ok(tasks);
         }
-        [HttpGet]
-        [Route("{id}")]
-        public async Task<ActionResult<JupiterTask>> GetTaskByIdAsync(string id) {
-            var task = await _context.Tasks.FindAsync(id);
 
-            
-            if(task == null)
+        [HttpGet("{id}")]
+        public async Task<ActionResult<JupiterTask>> GetTaskByIdAsync(string id)
+        {
+            var task = await _context.Tasks.SingleOrDefaultAsync(t => t.Id == id);
+
+            if (task == null)
             {
                 return NotFound();
             }
+
             return Ok(task);
         }
+
         [HttpPost]
         public async Task<ActionResult> AddTaskAsync(JupiterTask task)
         {
@@ -56,9 +60,8 @@ namespace JupiterWeb.API
             return Ok();
         }
 
-        [HttpPut]
-        [Route("{id}")]
-        public async Task<ActionResult> UpdateAsync(JupiterTask task,string id)
+        [HttpPut("{id}")]
+        public async Task<ActionResult> UpdateAsync(string id, JupiterTask task)
         {
             if (id != task.Id)
             {
@@ -89,9 +92,9 @@ namespace JupiterWeb.API
             return Ok();
         }
 
-        [HttpDelete]
-        [Route("{id}")]
-        public async Task<ActionResult> DeleteAsync(string id) {
+        [HttpDelete("{id}")]
+        public async Task<ActionResult> DeleteAsync(string id)
+        {
             var taskToDelete = await _context.Tasks.FindAsync(id);
 
             if (taskToDelete == null)
@@ -104,5 +107,7 @@ namespace JupiterWeb.API
 
             return Ok();
         }
+
+       
     }
 }

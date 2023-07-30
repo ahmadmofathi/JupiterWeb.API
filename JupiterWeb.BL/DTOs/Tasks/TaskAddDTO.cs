@@ -28,6 +28,9 @@ namespace JupiterWeb.BL
 
         [ForeignKey("UserAssignedTo")]
         public string? AssignedToId { get; set; }
+        public int Attempts { get; set; }
+
+        public bool ReviewRequested { get; set; }
 
     }
 }

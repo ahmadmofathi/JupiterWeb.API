@@ -51,7 +51,7 @@ namespace JupiterWeb.BL
             return user.Id;
         }
 
-        public bool Delete(int id)
+        public bool Delete(string id)
         {
             User? user = _userRepo.GetById(id);
             if (user == null) {
@@ -62,7 +62,7 @@ namespace JupiterWeb.BL
             return true;
         }
 
-        public UserReadDTO GetUser(int id)
+        public UserReadDTO GetUser(string id)
         {
             throw new NotImplementedException();
         }

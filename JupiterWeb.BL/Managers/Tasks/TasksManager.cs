@@ -97,5 +97,14 @@ namespace JupiterWeb.BL
             _tasksRepo.SaveChanges();
             return true;
         }
+
+        
+         public Task Create(JupiterTask task)
+            {
+                _tasksRepo.Add(task);
+                _tasksRepo.SaveChanges();
+                return Task.FromResult(task);
+         }
+        
     }
 }
