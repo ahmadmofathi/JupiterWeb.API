@@ -19,7 +19,7 @@ namespace JupiterWeb.DAL.Repos.Users
         {
             return _context.Set<User>().ToList();
         }
-        public User? GetById(int id)
+        public User? GetById(string id)
         {
             return _context.Set<User>().Find(id);
         }

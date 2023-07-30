@@ -29,5 +29,8 @@ namespace JupiterWeb.BL.DTOs.Tasks
 
         public string? AssignedToId { get; set; }
         public User? UserAssignedTo { get; set; }
+        public int Attempts { get; set; }
+
+        public bool ReviewRequested { get; set; }
     }
 }

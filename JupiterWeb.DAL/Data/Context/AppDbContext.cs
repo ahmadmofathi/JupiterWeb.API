@@ -100,9 +100,45 @@ namespace JupiterWeb.API.Data
                     .OnDelete(DeleteBehavior.Restrict);
             
             });
+
+            builder.Entity<User>()
+        .HasMany(u => u.Requests)
+        .WithOne(r => r.UserSentBy)
+        .HasForeignKey(r => r.userSentById)
+        .OnDelete(DeleteBehavior.Cascade);
+
+            builder.Entity<JupiterTask>()
+                .HasMany(t => t.Requests)
+                .WithOne(r => r.JupiterTask)
+                .HasForeignKey(r => r.TaskID)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            builder.Entity<Request>()
+                .HasOne(r => r.UserSentBy)
+                .WithMany(u => u.Requests)
+                .HasForeignKey(r => r.userSentById)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            builder.Entity<Request>()
+                .HasOne(r => r.UserSentTo)
+                .WithMany()
+                .HasForeignKey(r => r.userSentToId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            builder.Entity<Request>()
+                .HasOne(r => r.JupiterTask)
+                .WithMany(t => t.Requests)
+                .HasForeignKey(r => r.TaskID)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            builder.Entity<List<string>>().HasNoKey();
+            
+
         }
         public DbSet<User> User => Set<User>();
         public DbSet<JupiterTask> Tasks => Set<JupiterTask>();
+
+        public DbSet<Request> Requests => Set<Request>();
         
     }
 }

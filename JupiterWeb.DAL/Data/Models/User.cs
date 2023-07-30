@@ -23,5 +23,8 @@ namespace JupiterWeb.API.Data
         public string Branch { get; set; } = string.Empty;
         public ICollection<JupiterTask>? AssignedByTasks { get; set; }
         public ICollection<JupiterTask>? AssignedToTasks { get; set; }
+
+        public ICollection<Request>? Requests { get; set; }
+
     }
 }

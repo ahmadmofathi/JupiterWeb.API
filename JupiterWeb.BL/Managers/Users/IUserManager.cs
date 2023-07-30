@@ -9,9 +9,9 @@ namespace JupiterWeb.BL
     public interface IUserManager
     {
         IEnumerable<UserReadDTO> GetUsers();
-        UserReadDTO GetUser(int id);
+        UserReadDTO GetUser(string id);
         string Add(UserAddDTO user);
         bool Update(UserUpdateDTO user);
-        bool Delete(int id);
+        bool Delete(string id);
     }
 }

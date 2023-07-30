@@ -1,4 +1,5 @@
 ﻿using JupiterWeb.BL.DTOs.Tasks;
+using JupiterWeb.DAL;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -14,5 +15,7 @@ namespace JupiterWeb.BL
         string Add (TaskAddDTO task);
         bool Update(TaskUpdateDTO task);
         bool Delete(string id);
+        Task Create(JupiterTask task);
+        
     }
 }

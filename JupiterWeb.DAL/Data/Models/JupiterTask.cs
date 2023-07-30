@@ -20,6 +20,12 @@ namespace JupiterWeb.DAL
 
         public int TaskPoints { get; set; }
 
+        [NotMapped]
+        public List<string>? ReviewComments { get; set; }
+        public int Attempts { get; set; }
+
+        public bool ReviewRequested { get; set; }
+
         [MaxLength(500)]
         public string? Description { get; set; }
 
@@ -31,10 +37,13 @@ namespace JupiterWeb.DAL
 
         [ForeignKey("UserAssignedBy")]
         public string? AssignedById { get; set; }
-        public User? UserAssignedBy { get; set; }
+        public virtual User? UserAssignedBy { get; set; }
 
         [ForeignKey("UserAssignedTo")]
         public string? AssignedToId { get; set; }
-        public User? UserAssignedTo { get; set; }
+        public virtual User? UserAssignedTo { get; set; }
+
+        public ICollection<Request>? Requests { get; set; }
+
     }
 }

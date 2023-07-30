@@ -11,6 +11,7 @@ using System.Security.Claims;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using System.IdentityModel.Tokens.Jwt;
+using JupiterWeb.DAL;
 
 namespace JupiterWeb.API.Controllers
 {
@@ -21,12 +22,15 @@ namespace JupiterWeb.API.Controllers
         private readonly AppDbContext _context;
         private readonly UserManager<User> _userManager;
         private readonly IConfiguration _configuration;
+        private readonly ITaskManager _taskManager;
 
-        public UserController(AppDbContext context,UserManager<User> userManager,IConfiguration config)
+
+        public UserController(AppDbContext context,UserManager<User> userManager,IConfiguration config,ITaskManager taskManager)
         {
             _context = context;
             _userManager = userManager;
             _configuration= config;
+            _taskManager = taskManager;
         }
         [HttpPost]
         [Route("register")]
@@ -241,6 +245,30 @@ namespace JupiterWeb.API.Controllers
         private bool UserExists(string id)
         {
             return _context.Users.Any(e => e.Id == id);
+        }
+
+        [HttpPost("createTask")]
+        public async Task<IActionResult> CreateTask([FromBody] TaskAddDTO createTaskDto)
+        {
+            var userAssignedBy = await _userManager.FindByIdAsync(createTaskDto.AssignedById);
+
+            if (userAssignedBy == null)
+            {
+                return BadRequest("Invalid userAssignedBy id");
+            }
+
+            var task = new JupiterTask
+            {
+                Description = createTaskDto.Description,
+                AssignedById = createTaskDto.AssignedById,
+                AssignedToId = createTaskDto.AssignedToId,
+                Attempts = 0,
+                ReviewRequested = false
+            };
+
+            await _taskManager.Create(task);
+
+            return Ok();
         }
     }
 }
