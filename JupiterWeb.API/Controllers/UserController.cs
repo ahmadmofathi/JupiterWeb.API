@@ -12,6 +12,7 @@ using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using System.IdentityModel.Tokens.Jwt;
 using JupiterWeb.DAL;
+using System.Xml.Linq;
 
 namespace JupiterWeb.API.Controllers
 {
@@ -23,39 +24,41 @@ namespace JupiterWeb.API.Controllers
         private readonly UserManager<User> _userManager;
         private readonly IConfiguration _configuration;
         private readonly ITaskManager _taskManager;
+        private readonly ITaskRepo _tasksRepo;
 
-
-        public UserController(AppDbContext context,UserManager<User> userManager,IConfiguration config,ITaskManager taskManager)
+        public UserController(AppDbContext context, UserManager<User> userManager, IConfiguration config, ITaskManager taskManager, ITaskRepo tasksRepo)
         {
             _context = context;
             _userManager = userManager;
-            _configuration= config;
+            _configuration = config;
             _taskManager = taskManager;
+            _tasksRepo = tasksRepo;
         }
         [HttpPost]
         [Route("register")]
         public async Task<ActionResult<string>> Register(RegisterDTO registerDTO)
         {
-            try { 
-            var newUser = new User
+            try
             {
-                Id = Guid.NewGuid().ToString(),
-                Email = registerDTO.Email,
-                UserName = registerDTO.UserName,
-                GetEmployedAt = registerDTO.GetEmployedAt,
-                Role = registerDTO.Role,
-                Address = registerDTO.Address,
-                Branch = registerDTO.Branch,
-                WhatsApp = registerDTO.WhatsApp,
-                PhoneNumber = registerDTO.PhoneNumber,
-                Name = registerDTO.Name,
-            };
+                var newUser = new User
+                {
+                    Id = Guid.NewGuid().ToString(),
+                    Email = registerDTO.Email,
+                    UserName = registerDTO.UserName,
+                    GetEmployedAt = registerDTO.GetEmployedAt,
+                    Role = registerDTO.Role,
+                    Address = registerDTO.Address,
+                    Branch = registerDTO.Branch,
+                    WhatsApp = registerDTO.WhatsApp,
+                    PhoneNumber = registerDTO.PhoneNumber,
+                    Name = registerDTO.Name,
+                };
 
-            var CreationResult = await _userManager.CreateAsync(newUser, registerDTO.Password);
-            if (!CreationResult.Succeeded)
-            {
-                return BadRequest(CreationResult.Errors);
-            }
+                var CreationResult = await _userManager.CreateAsync(newUser, registerDTO.Password);
+                if (!CreationResult.Succeeded)
+                {
+                    return BadRequest(CreationResult.Errors);
+                }
                 // Fetch the user from the database
                 var createdUser = await _userManager.FindByEmailAsync(newUser.Email);
                 if (createdUser == null)
@@ -76,25 +79,25 @@ namespace JupiterWeb.API.Controllers
                         };
 
 
-            // Save the user to the database
-            // await _context.SaveChangesAsync();
-            // Now add the claims
-            var claimsResult = await _userManager.AddClaimsAsync(newUser, userClaims);
-            if (!claimsResult.Succeeded)
-            {
-                // If adding the claims fails, delete the user to avoid orphaned users
-                await _userManager.DeleteAsync(newUser);
-                return BadRequest(claimsResult.Errors);
+                // Save the user to the database
+                // await _context.SaveChangesAsync();
+                // Now add the claims
+                var claimsResult = await _userManager.AddClaimsAsync(newUser, userClaims);
+                if (!claimsResult.Succeeded)
+                {
+                    // If adding the claims fails, delete the user to avoid orphaned users
+                    await _userManager.DeleteAsync(newUser);
+                    return BadRequest(claimsResult.Errors);
+                }
+                /* var CreationResult = await _userManager.CreateAsync(newUser, registerDTO.Password);
+                 if(!CreationResult.Succeeded)
+                 {
+                     return BadRequest(CreationResult.Errors);
+                 }
+                 await _userManager.AddClaimsAsync(newUser, userClaims);
+                  */
+                return Ok("Done");
             }
-            /* var CreationResult = await _userManager.CreateAsync(newUser, registerDTO.Password);
-             if(!CreationResult.Succeeded)
-             {
-                 return BadRequest(CreationResult.Errors);
-             }
-             await _userManager.AddClaimsAsync(newUser, userClaims);
-              */
-            return Ok("Done");
-        }
             catch (DbUpdateException ex)
             {
                 var exceptionDetails = ex.InnerException?.Message;
@@ -102,7 +105,8 @@ namespace JupiterWeb.API.Controllers
 
                 return BadRequest(exceptionDetails);
             }
-            catch (Exception ex){
+            catch (Exception ex)
+            {
                 // Log the exception or return it
                 return BadRequest(ex.Message);
             }
@@ -116,13 +120,13 @@ namespace JupiterWeb.API.Controllers
             {
                 return BadRequest("User Not Found");
             }
-            if(await _userManager.IsLockedOutAsync(user))
+            if (await _userManager.IsLockedOutAsync(user))
             {
                 return BadRequest("Try Again");
             }
-            var userClaims= await _userManager.GetClaimsAsync(user);
-            bool isAuthenticated = await _userManager.CheckPasswordAsync(user,credintials.Password);
-            if(!isAuthenticated)
+            var userClaims = await _userManager.GetClaimsAsync(user);
+            bool isAuthenticated = await _userManager.CheckPasswordAsync(user, credintials.Password);
+            if (!isAuthenticated)
             {
                 await _userManager.AccessFailedAsync(user);
                 return Unauthorized("Wrong Credentials");
@@ -247,28 +251,95 @@ namespace JupiterWeb.API.Controllers
             return _context.Users.Any(e => e.Id == id);
         }
 
-        [HttpPost("createTask")]
-        public async Task<IActionResult> CreateTask([FromBody] TaskAddDTO createTaskDto)
+        [HttpPost]
+        [Route("tasks")]
+        public async Task<IActionResult> CreateTaskAsync([FromBody] TaskAddDTO taskDTO)
         {
-            var userAssignedBy = await _userManager.FindByIdAsync(createTaskDto.AssignedById);
-
-            if (userAssignedBy == null)
+            // Parse the task data from the JSON payload
+            JupiterTask task = new JupiterTask
             {
-                return BadRequest("Invalid userAssignedBy id");
-            }
-
-            var task = new JupiterTask
-            {
-                Description = createTaskDto.Description,
-                AssignedById = createTaskDto.AssignedById,
-                AssignedToId = createTaskDto.AssignedToId,
-                Attempts = 0,
-                ReviewRequested = false
+                Name = taskDTO.Name,
+                AssignedById = taskDTO.AssignedById,
+                AssignedToId = taskDTO.AssignedToId,
+                Deadline = taskDTO.Deadline,
+                Description = taskDTO.Description,
+                IsDone = taskDTO.IsDone,
+                Link = taskDTO.Link,
+                TaskPoints = taskDTO.TaskPoints
             };
 
-            await _taskManager.Create(task);
+            // Add the task to the database
+            _context.Tasks.Add(task);
+            await _context.SaveChangesAsync();
 
-            return Ok();
+            // Return a response to the user
+            return Ok(new
+            {
+                message = "Task created successfully",
+                taskId = task.Id
+            });
         }
+        /*
+        [HttpPut("{id}/submit")]
+        public async Task<IActionResult> SubmitTask(string id, [FromBody] Submission request)
+        {
+            // Find the user in the database
+            var user = await _userManager.FindByIdAsync(id);
+
+            if (user == null)
+            {
+                return NotFound();
+            }
+
+            // Find the task in the database
+            var task = await _context.Tasks.FindAsync(request.TaskId);
+
+            if (task == null)
+            {
+                return NotFound();
+            }
+
+            // Check if the user is assigned to the task
+            if (task.AssignedToId != user.Id)
+            {
+                return BadRequest("This task is not assigned to you.");
+            }
+
+            // Check if the task is already marked as done
+            if (task.IsDone)
+            {
+                return BadRequest("This task is already marked as done.");
+            }
+
+            // Mark the task as done and increment the attempts
+            task.IsDone = true;
+            task.Attempts++;
+
+            // Create a new request
+            var taskRequest = new Request
+            {
+                Name = task.Name,
+                IsApproved = false,
+                IsReviewed = false,
+                Comments = new List<string>(),
+                JupiterTask = task,
+                UserSentBy = user,
+                UserSentTo = task.UserAssignedBy
+            };
+            
+            // Add the request to the collection of requests associated with the task
+            task.Requests.Add(taskRequest);
+
+            // If the user assignedBy is submitting the task, add a comment to the request with the link of the submission
+            if (task.AssignedById == user.Id)
+            {
+                taskRequest.Comments.Add(request.Comment);
+            }
+
+            // Save changes to the database
+            await _context.SaveChangesAsync();
+
+            return Ok("Task submitted successfully.");
+        } */
     }
 }
