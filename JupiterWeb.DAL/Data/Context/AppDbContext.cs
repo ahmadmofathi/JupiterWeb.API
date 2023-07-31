@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
+using System.ComponentModel.DataAnnotations.Schema;
 using System.Reflection.Emit;
 
 namespace JupiterWeb.API.Data
@@ -130,7 +131,7 @@ namespace JupiterWeb.API.Data
                 .WithMany(t => t.Requests)
                 .HasForeignKey(r => r.TaskID)
                 .OnDelete(DeleteBehavior.Restrict);
-
+            
             builder.Entity<List<string>>().HasNoKey();
             
 

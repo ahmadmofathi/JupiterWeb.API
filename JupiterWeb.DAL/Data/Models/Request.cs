@@ -15,10 +15,11 @@ namespace JupiterWeb.DAL
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public string? Id { get; set; }
         public string? Name { get; set; }
-        bool isApproved { get; set; }
+        public bool IsApproved { get; set; }
         public bool IsReviewed { get; set; }
 
-        List<string>? Comments { get; set; }
+        [NotMapped]
+        public List<string>? Comments { get; set; }
 
         [ForeignKey("TaskID")]
         public string? TaskID { get; set; }

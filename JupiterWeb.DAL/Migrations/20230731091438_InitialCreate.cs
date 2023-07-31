@@ -26,6 +26,16 @@ namespace JupiterWeb.DAL.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "List<string>",
+                columns: table => new
+                {
+                    Capacity = table.Column<int>(type: "int", nullable: false)
+                },
+                constraints: table =>
+                {
+                });
+
+            migrationBuilder.CreateTable(
                 name: "User",
                 columns: table => new
                 {
@@ -165,6 +175,73 @@ namespace JupiterWeb.DAL.Migrations
                         onDelete: ReferentialAction.Cascade);
                 });
 
+            migrationBuilder.CreateTable(
+                name: "JupiterTask",
+                columns: table => new
+                {
+                    Id = table.Column<string>(type: "nvarchar(450)", nullable: false),
+                    Name = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
+                    IsDone = table.Column<bool>(type: "bit", nullable: false),
+                    TaskPoints = table.Column<int>(type: "int", nullable: false),
+                    Attempts = table.Column<int>(type: "int", nullable: false),
+                    ReviewRequested = table.Column<bool>(type: "bit", nullable: false),
+                    Description = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: true),
+                    Link = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: true),
+                    Deadline = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    AssignedById = table.Column<string>(type: "nvarchar(450)", nullable: true),
+                    AssignedToId = table.Column<string>(type: "nvarchar(450)", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_JupiterTask", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_JupiterTask_User_AssignedById",
+                        column: x => x.AssignedById,
+                        principalTable: "User",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_JupiterTask_User_AssignedToId",
+                        column: x => x.AssignedToId,
+                        principalTable: "User",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Requests",
+                columns: table => new
+                {
+                    Id = table.Column<string>(type: "nvarchar(450)", nullable: false),
+                    Name = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    IsReviewed = table.Column<bool>(type: "bit", nullable: false),
+                    TaskID = table.Column<string>(type: "nvarchar(450)", nullable: true),
+                    userSentById = table.Column<string>(type: "nvarchar(450)", nullable: true),
+                    userSentToId = table.Column<string>(type: "nvarchar(450)", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Requests", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_Requests_JupiterTask_TaskID",
+                        column: x => x.TaskID,
+                        principalTable: "JupiterTask",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_Requests_User_userSentById",
+                        column: x => x.userSentById,
+                        principalTable: "User",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_Requests_User_userSentToId",
+                        column: x => x.userSentToId,
+                        principalTable: "User",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                });
+
             migrationBuilder.CreateIndex(
                 name: "IX_AspNetRoleClaims_RoleId",
                 table: "AspNetRoleClaims",
@@ -191,6 +268,31 @@ namespace JupiterWeb.DAL.Migrations
                 name: "IX_AspNetUserRoles_RoleId",
                 table: "AspNetUserRoles",
                 column: "RoleId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_JupiterTask_AssignedById",
+                table: "JupiterTask",
+                column: "AssignedById");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_JupiterTask_AssignedToId",
+                table: "JupiterTask",
+                column: "AssignedToId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Requests_TaskID",
+                table: "Requests",
+                column: "TaskID");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Requests_userSentById",
+                table: "Requests",
+                column: "userSentById");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Requests_userSentToId",
+                table: "Requests",
+                column: "userSentToId");
 
             migrationBuilder.CreateIndex(
                 name: "EmailIndex",
@@ -245,7 +347,16 @@ namespace JupiterWeb.DAL.Migrations
                 name: "AspNetUserTokens");
 
             migrationBuilder.DropTable(
+                name: "List<string>");
+
+            migrationBuilder.DropTable(
+                name: "Requests");
+
+            migrationBuilder.DropTable(
                 name: "AspNetRoles");
+
+            migrationBuilder.DropTable(
+                name: "JupiterTask");
 
             migrationBuilder.DropTable(
                 name: "User");

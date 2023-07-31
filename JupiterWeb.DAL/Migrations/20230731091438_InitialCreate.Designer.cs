@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace JupiterWeb.DAL.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20230729085710_Tasks29July")]
-    partial class Tasks29July
+    [Migration("20230731091438_InitialCreate")]
+    partial class InitialCreate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -161,6 +161,9 @@ namespace JupiterWeb.DAL.Migrations
                     b.Property<string>("AssignedToId")
                         .HasColumnType("nvarchar(450)");
 
+                    b.Property<int>("Attempts")
+                        .HasColumnType("int");
+
                     b.Property<DateTime>("Deadline")
                         .HasColumnType("datetime2");
 
@@ -180,6 +183,9 @@ namespace JupiterWeb.DAL.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("nvarchar(100)");
 
+                    b.Property<bool>("ReviewRequested")
+                        .HasColumnType("bit");
+
                     b.Property<int>("TaskPoints")
                         .HasColumnType("int");
 
@@ -190,6 +196,38 @@ namespace JupiterWeb.DAL.Migrations
                     b.HasIndex("AssignedToId");
 
                     b.ToTable("JupiterTask", (string)null);
+                });
+
+            modelBuilder.Entity("JupiterWeb.DAL.Request", b =>
+                {
+                    b.Property<string>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<bool>("IsReviewed")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Name")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("TaskID")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("userSentById")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("userSentToId")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TaskID");
+
+                    b.HasIndex("userSentById");
+
+                    b.HasIndex("userSentToId");
+
+                    b.ToTable("Requests");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRole<string>", b =>
@@ -325,6 +363,14 @@ namespace JupiterWeb.DAL.Migrations
                     b.ToTable("AspNetUserTokens", (string)null);
                 });
 
+            modelBuilder.Entity("System.Collections.Generic.List<string>", b =>
+                {
+                    b.Property<int>("Capacity")
+                        .HasColumnType("int");
+
+                    b.ToTable("List<string>");
+                });
+
             modelBuilder.Entity("JupiterWeb.DAL.JupiterTask", b =>
                 {
                     b.HasOne("JupiterWeb.API.Data.User", "UserAssignedBy")
@@ -340,6 +386,30 @@ namespace JupiterWeb.DAL.Migrations
                     b.Navigation("UserAssignedBy");
 
                     b.Navigation("UserAssignedTo");
+                });
+
+            modelBuilder.Entity("JupiterWeb.DAL.Request", b =>
+                {
+                    b.HasOne("JupiterWeb.DAL.JupiterTask", "JupiterTask")
+                        .WithMany("Requests")
+                        .HasForeignKey("TaskID")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("JupiterWeb.API.Data.User", "UserSentBy")
+                        .WithMany("Requests")
+                        .HasForeignKey("userSentById")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("JupiterWeb.API.Data.User", "UserSentTo")
+                        .WithMany()
+                        .HasForeignKey("userSentToId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("JupiterTask");
+
+                    b.Navigation("UserSentBy");
+
+                    b.Navigation("UserSentTo");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
@@ -398,6 +468,13 @@ namespace JupiterWeb.DAL.Migrations
                     b.Navigation("AssignedByTasks");
 
                     b.Navigation("AssignedToTasks");
+
+                    b.Navigation("Requests");
+                });
+
+            modelBuilder.Entity("JupiterWeb.DAL.JupiterTask", b =>
+                {
+                    b.Navigation("Requests");
                 });
 #pragma warning restore 612, 618
         }
