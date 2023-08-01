@@ -25,14 +25,16 @@ namespace JupiterWeb.API.Controllers
         private readonly IConfiguration _configuration;
         private readonly ITaskManager _taskManager;
         private readonly ITaskRepo _tasksRepo;
+        private readonly IRequestRepo _requestRepo;
 
-        public UserController(AppDbContext context, UserManager<User> userManager, IConfiguration config, ITaskManager taskManager, ITaskRepo tasksRepo)
+        public UserController(AppDbContext context, UserManager<User> userManager, IConfiguration config,IRequestRepo requestRepo, ITaskManager taskManager, ITaskRepo tasksRepo)
         {
             _context = context;
             _userManager = userManager;
             _configuration = config;
             _taskManager = taskManager;
             _tasksRepo = tasksRepo;
+            _requestRepo = requestRepo;
         }
         [HttpPost]
         [Route("register")]
@@ -279,7 +281,7 @@ namespace JupiterWeb.API.Controllers
                 taskId = task.Id
             });
         }
-        /*
+
         [HttpPut("{id}/submit")]
         public async Task<IActionResult> SubmitTask(string id, [FromBody] Submission request)
         {
@@ -312,7 +314,7 @@ namespace JupiterWeb.API.Controllers
             }
 
             // Mark the task as done and increment the attempts
-            task.IsDone = true;
+            task.ReviewRequested = true;
             task.Attempts++;
 
             // Create a new request
@@ -324,22 +326,38 @@ namespace JupiterWeb.API.Controllers
                 Comments = new List<string>(),
                 JupiterTask = task,
                 UserSentBy = user,
-                UserSentTo = task.UserAssignedBy
+                UserSentTo = task.UserAssignedTo
             };
-            
-            // Add the request to the collection of requests associated with the task
-            task.Requests.Add(taskRequest);
 
-            // If the user assignedBy is submitting the task, add a comment to the request with the link of the submission
-            if (task.AssignedById == user.Id)
+            // If the user assignedBy is submitting the task, add a comment to the task with the link of the submission
+            if (task.AssignedById != user.Id)
             {
-                taskRequest.Comments.Add(request.Comment);
+                var comment = $"Task submitted by {user.UserName}: {request.Comment}";
+                taskRequest.Comments?.Add(comment);
             }
+
+            // Add the review request to the database
+            _context.Requests.Add(taskRequest);
+
+            // Add the request to the collection of requests associated with the task
+            task.Requests?.Add(taskRequest);
 
             // Save changes to the database
             await _context.SaveChangesAsync();
 
             return Ok("Task submitted successfully.");
-        } */
+        }
+        [HttpGet("requests")]
+        public async Task<IActionResult> GetRequests()
+        {
+            var loggedInUser = await _userManager.GetUserAsync(User);
+
+            var requests = await _context.Requests
+                .Where(r => r.userSentToId == loggedInUser.Id)
+                    .ToListAsync();
+            return Ok(requests);
+        }
+
+
     }
 }

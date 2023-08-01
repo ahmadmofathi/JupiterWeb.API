@@ -1,5 +1,4 @@
-﻿using JupiterWeb.BL.DTOs.Tasks;
-using JupiterWeb.DAL;
+﻿using JupiterWeb.DAL;
 using System;
 using System.Collections.Generic;
 using System.Linq;

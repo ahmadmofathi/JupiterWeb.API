@@ -31,6 +31,8 @@ builder.Services.AddDbContext<AppDbContext>(options => options.UseSqlServer(conn
 builder.Services.AddScoped<IUserRepo, UserRepo>();
 builder.Services.AddScoped<ITaskRepo, TasksRepo>();
 builder.Services.AddScoped<ITaskManager, TasksManager>();
+builder.Services.AddScoped<IRequestRepo, RequestRepo>();
+
 builder.Services.AddAuthorization();
 // Injection of UserManager 
 
