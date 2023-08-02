@@ -17,12 +17,19 @@ namespace JupiterWeb.DAL
         }
         public string Add(Request req)
         {
-            throw new NotImplementedException();
+            if (req.Id == null)
+            {
+                return "Not Found";
+            }
+            _context.Set<Request>().Add(req);
+
+            return req.Id;
         }
 
         public bool Delete(Request req)
         {
-            throw new NotImplementedException();
+            _context.Set<Request>().Remove(req);
+            return true;
         }
 
         public IEnumerable<Request> GetAll()
@@ -30,19 +37,20 @@ namespace JupiterWeb.DAL
             return _context.Set<Request>().ToList();
         }
 
-        public Request? GetTaskById(string reqId)
+        public Request? GetReqById(string reqId)
         {
-            throw new NotImplementedException();
+            return _context.Set<Request>().Find(reqId);
         }
 
         public int SaveChanges()
         {
-            throw new NotImplementedException();
+            return _context.SaveChanges();
         }
 
         public bool Update(Request req)
         {
-            throw new NotImplementedException();
+            _context.Set<Request>().Update(req);
+            return true;
         }
     }
 }

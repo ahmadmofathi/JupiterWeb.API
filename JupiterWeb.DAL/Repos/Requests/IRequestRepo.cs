@@ -10,7 +10,7 @@ namespace JupiterWeb.DAL
     {
         IEnumerable<Request> GetAll();
        
-        Request? GetTaskById(string reqId);
+        Request? GetReqById(string reqId);
         string Add(Request req);
         bool Delete(Request req);
         bool Update(Request req);
