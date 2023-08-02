@@ -9,6 +9,7 @@ namespace JupiterWeb.BL
     public class Submission
     {
         public string? TaskId { get; set; }
+        public string? userSentTo { get; set; }
         public string? Comment { get; set; }
     }
 }

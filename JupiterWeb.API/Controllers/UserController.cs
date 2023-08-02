@@ -288,6 +288,7 @@ namespace JupiterWeb.API.Controllers
             // Find the user in the database
             var user = await _userManager.FindByIdAsync(id);
 
+
             if (user == null)
             {
                 return NotFound();
@@ -325,8 +326,8 @@ namespace JupiterWeb.API.Controllers
                 IsReviewed = false,
                 Comments = new List<string>(),
                 JupiterTask = task,
-                UserSentBy = user,
-                UserSentTo = task.UserAssignedTo
+                UserSentBy = task.UserAssignedTo,
+                userSentToId = request.userSentTo
             };
 
             // If the user assignedBy is submitting the task, add a comment to the task with the link of the submission
@@ -347,14 +348,12 @@ namespace JupiterWeb.API.Controllers
 
             return Ok("Task submitted successfully.");
         }
-        [HttpGet("requests")]
-        public async Task<IActionResult> GetRequests()
+        [HttpGet("{id}/requests")]
+        public async Task<IActionResult> GetRequests(string id)
         {
-            var loggedInUser = await _userManager.GetUserAsync(User);
-
             var requests = await _context.Requests
-                .Where(r => r.userSentToId == loggedInUser.Id)
-                    .ToListAsync();
+                .Where(r => r.userSentToId == id)
+                .ToListAsync();
             return Ok(requests);
         }
 
